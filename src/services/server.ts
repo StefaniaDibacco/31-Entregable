@@ -5,8 +5,11 @@ import router from '../routes/index';
 import path from 'path';
 import session from 'express-session';
 import passport from '../middleware/auth';
+import compression from 'compression';
+import { errorHandler } from './../middleware/error';
 
 const app = express();
+app.use(compression());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +30,7 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(errorHandler);
 
 // configuracion de hbs
 const layoutDirPath = path.resolve(__dirname, '../../views/layouts');

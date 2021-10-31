@@ -2,30 +2,38 @@ import { init } from './services/sockets';
 import myServer from './services/server';
 import { Server } from 'socket.io';
 import Config from './config';
+import args from 'args';
 import cluster from 'cluster';
 import os from 'os';
+import { logger } from './utils/logger';
+import 'dotenv/config.js';
 
 const io = new Server(myServer);
-const puerto = Config.PORT;
 init(io);
 
-const numCPUs = os.cpus().length - 1;
-const clusterMode = process.argv.includes('CLUSTER');
+const numCPUs = os.cpus().length;
+const flags = args.parse(process.argv);
 
-if (clusterMode && cluster.isMaster) {
-  console.log(`NUMERO DE CPUS ===> ${numCPUs}`);
-  console.log(`PID MASTER ${process.pid}`);
+if (flags.mode === 'cluster' && flags.run !== 'pm2' && cluster.isMaster) {
+  logger.info(`NUMERO DE CPUS ===> ${numCPUs}`);
+  logger.info(`PID MASTER ${process.pid}, ${new Date()}`);
 
   for (let i = 0; i < numCPUs; i++) {
     cluster.fork();
   }
 
   cluster.on('exit', (worker) => {
-    console.log(`Worker ${worker.process.pid} died at ${Date()}`);
+    logger.warn(`Worker ${worker.process.pid} died at ${Date()}`);
     cluster.fork();
   });
 } else {
-  myServer.listen(puerto, () =>
-    console.log(`Server up puerto ${puerto}- PID WORKER ${process.pid}`)
+  const puerto = Config.PORT;
+  myServer.listen(puerto, () => {
+    logger.info(
+      `Servidor inicializado en http://localhost:${puerto} - PID WORKER ${process.pid}`
+    );
+  });
+  myServer.on('error', (error) =>
+    logger.error(`Error en el servidor: ${error}`)
   );
 }

@@ -16,6 +16,14 @@ const options = [
     name: 'faceSecret',
     description: 'Facebook app secret',
   },
+  {
+    name: 'mode',
+    description: 'run in fork or cluster mode',
+  },
+  {
+    name: 'run',
+    description: 'forever or pm2',
+  },
 ];
 
 args.options(options);
